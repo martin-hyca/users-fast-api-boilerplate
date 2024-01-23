@@ -1,0 +1,36 @@
+{% extends "base_template.html.j2" %}
+{% block content %}
+    {% if message %}<h1>{{ message }}</h1>
+    {% else %}{% endif %}
+    <form action="/login" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        
+        <div>
+            {{ form.username.label(for='username') }}
+            {{ form.username(id='username') }}
+            {% if form.username.errors %}
+                <ul>
+                    {% for error in form.username.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <div>
+            {{ form.password.label(for='password') }}
+            {{ form.password(id='password') }}
+            {% if form.password.errors %}
+                <ul>
+                    {% for error in form.password.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <button type="submit">Login</button>
+    </form>
+    <a href="/register">register</a>
+{% endblock %}
+
