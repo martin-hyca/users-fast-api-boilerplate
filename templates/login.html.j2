@@ -2,6 +2,8 @@
 {% block content %}
     {% if message %}<h1>{{ message }}</h1>
     {% else %}{% endif %}
+
+
     <form action="/login" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         

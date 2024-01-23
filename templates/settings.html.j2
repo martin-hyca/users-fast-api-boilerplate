@@ -3,6 +3,8 @@
 
     <h1>Change Password for {{ user }}</h1>
     <form method="post" action="/settings">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
         <div>
             {{ form.current_password.label(for='current_password') }}
             {{ form.current_password(id='current_password') }}

@@ -3,6 +3,11 @@ from fastapi import Request, HTTPException
 from fastapi.responses import RedirectResponse
 from typing import Callable
 
+async def get_current_user(request: Request) -> str:
+    user = request.session.get('user')
+    if not user:
+      return RedirectResponse(url="/", status_code=302)
+    return user
 
 def csrf_protect(endpoint: Callable):
     @wraps(endpoint)
