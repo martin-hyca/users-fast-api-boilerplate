@@ -1,20 +1,19 @@
 from fastapi import FastAPI, Request, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from wtforms import Form as WTForm, StringField, PasswordField, validators
-from secrets import token_urlsafe
 from sqlalchemy.orm import Session
-from functools import wraps
+
+
 
 from mydatabase import get_db
 from models import User
 from auth import verify_password, hash_password
 from forms import RegistrationForm, LoginForm, ChangePasswordForm
-from security import login_required, csrf_protect, get_current_user
-from flash import flash, get_flashed_messages
-
+from security import login_required, csrf_protect, get_current_user, generate_csrf_token
+from flash import flash
+from config import templates
 
 # @csrf_protect
 
@@ -22,25 +21,14 @@ from flash import flash, get_flashed_messages
 # Mock user data
 # users = {"admin": "password123"}
 
-# CSRF and Secret tokens
-secret_key = token_urlsafe(32)
 
 # FastAPI app initialization
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key=secret_key)
-
-# Jinja2 Templates
-templates = Jinja2Templates(directory="templates")
-templates.env.globals["get_flashed_messages"] = get_flashed_messages
-
-
+app.add_middleware(SessionMiddleware, secret_key=generate_csrf_token) # used to be secret_key=secret_key
 
 # mount static files
 app.mount("/static/", StaticFiles(directory='static', html=True), name="static")
 
-# CSRF token generation
-def generate_csrf_token():
-    return token_urlsafe(32)
 
 # Register GET
 @app.get("/register", response_class=HTMLResponse)
@@ -50,7 +38,7 @@ async def get_register(request: Request, user: str = Depends(get_current_user)):
     form = RegistrationForm()
     return templates.TemplateResponse("register.html.j2", {"request": request, "form": form, "csrf_token": csrf_token, "user": user})
 
-# Register POSThn
+# Register POST
 @app.post("/register")
 @csrf_protect
 async def register_user(request: Request, db: Session = Depends(get_db), user: str = Depends(get_current_user)):
@@ -88,9 +76,13 @@ async def change_password(request: Request, db: Session = Depends(get_db), user:
             new_hashed_password = hash_password(form.new_password.data)
             current_user.hashed_password = new_hashed_password
             db.commit()
-            message = "Password changed successfuly"
+            flash(request, "Password changed successfuly", "success")
+
             # Redirect to the success page or inform the user of successful password change
-            return RedirectResponse(url=f"/success?message={message}", status_code=302)
+            return RedirectResponse(url="/success", status_code=302)
+            # this is how I was passing the message before Flash: 
+            # message = "Password changed successfuly"
+            # return RedirectResponse(url=f"/success?message={message}", status_code=302)
         else:
             # Handle incorrect current password
             pass # Add logic to handle incorrect password
@@ -133,14 +125,15 @@ async def login_post(request: Request, db: Session = Depends(get_db), user: str 
             request.session['csrf_token'] = csrf_token
             request.session['user'] = user.username
             user = request.session['user']
-            flash(request, "Login Successful", "success")
-            return templates.TemplateResponse("success.html.j2", {"request": request, "user": user})
-            # return RedirectResponse(url="/success", status_code=302)
+            flash(request, "Login successful", "success")
+            # return templates.TemplateResponse("success.html.j2", {"request": request, "user": user})
+            return RedirectResponse(url="/success", status_code=302)
 
     # If validation fails or login is incorrect, re-render the form with an error
     # Reuse the existing CSRF token for rendering the form again
     csrf_token = request.session.get('csrf_token', generate_csrf_token())
     message = "login incorrect"
+    flash(request, "Login Incorrect", "danger")
     return templates.TemplateResponse("login.html.j2", {"request": request, "form": form, "csrf_token": csrf_token, "user": user, "message": message})
 
 
