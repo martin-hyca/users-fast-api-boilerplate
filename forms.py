@@ -1,5 +1,5 @@
 from starlette_wtf import StarletteForm
-from wtforms import Form, StringField, PasswordField, validators
+from wtforms import Form, StringField, PasswordField, SubmitField, validators
 from wtforms.validators import DataRequired, Email, EqualTo
 from wtforms.widgets import PasswordInput
 
@@ -16,6 +16,7 @@ class RegistrationForm(Form):
 class LoginForm(Form): 
     username = StringField('Username', [validators.DataRequired()])
     password = PasswordField('Password', [validators.DataRequired()])
+    submit = SubmitField('Login')
 
 class ChangePasswordForm(Form):
     current_password = PasswordField('Current Password', [validators.DataRequired()])

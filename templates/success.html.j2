@@ -1,29 +1,30 @@
 {% extends "base_template.html.j2" %}
 {% block content %}
-    <h1>Welcome, {{ user }}!</h1>
+    {# <h1>Welcome, {{ user }}!</h1>
     {% if message %} 
         {{ message }}
     {% else %}
-    {% endif %}
+    {% endif %} #}
+
         {# Flashing message #}
-        {% for flashed_message in get_flashed_messages(request) %}
+        {# {% for flashed_message in get_flashed_messages(request) %}
             <div class="alert alert-{{ flashed_message.category }}">{{ flashed_message.message }}</div>
-        {% endfor %}
+        {% endfor %} #}
         {# Flashing message ends here #}
 
 {# the very same thing with scoped variables #}
-    {# {% with flashed_messages = get_flashed_messages(request) %}
+    {% with flashed_messages = get_flashed_messages(request) %}
         {% if flashed_messages %}
             {% for flashed_message in flashed_messages %}
                 <div class="alert alert-{{ flashed_message.category }}">{{ flashed_message.message }}</div>
             {% endfor %}
         {% endif %}
-    {% endwith %} #}
+    {% endwith %}
 
 
-    <form method="post" action="/logout">
+    {# <form method="post" action="/logout">
         <button type="submit">Logout</button>
-    </form>
+    </form> #}
 
 {% endblock %}
 

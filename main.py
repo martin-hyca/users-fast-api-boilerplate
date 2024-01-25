@@ -1,11 +1,9 @@
-from fastapi import FastAPI, Request, Depends, HTTPException, Query
+from fastapi import FastAPI, Request, Depends, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from wtforms import Form as WTForm, StringField, PasswordField, validators
 from sqlalchemy.orm import Session
-
-
 
 from mydatabase import get_db
 from models import User
@@ -104,7 +102,7 @@ async def login(request: Request, user: str = Depends(get_current_user)):
 
     form = LoginForm()
     message = request.session.pop('message', None)  # Retrieve and remove the message from the session
-    return templates.TemplateResponse("login.html.j2", {"request": request, "form": form, "csrf_token": csrf_token, "user": user, "message": message})
+    return templates.TemplateResponse("index.html.j2", {"request": request, "form": form, "csrf_token": csrf_token, "user": user, "message": message})
 
 # Processing login
 @app.post("/login")

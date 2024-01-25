@@ -1,13 +1,54 @@
 {% extends "base_template.html.j2" %}
 {% block content %}
-    {% if message %}<h1>{{ message }}</h1>
-    {% else %}{% endif %}
 
-        {# Flashing message #}
-        {% for flashed_message in get_flashed_messages(request) %}
-            <div class="alert alert-{{ flashed_message.category }}">{{ flashed_message.message }}</div>
-        {% endfor %}
-        {# Flashing message ends here #}
+
+
+{# Flashing message #}
+{% for flashed_message in get_flashed_messages(request) %}
+    <div class="alert alert-{{ flashed_message.category }}">{{ flashed_message.message }}</div>
+{% endfor %}
+{# Flashing message ends here #}
+
+{% if user is none %}
+    {# Login form #}
+    <form action="/login" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-floating mb-3">
+    {{ form.username(id='username', class='form-control', placeholder='Username')}}
+    {{ form.username.label(for='username') }}
+    {% if form.username.errors %}
+        <ul>
+            {% for error in form.username.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    </div>
+    <div class="form-floating mb-3">
+    {{ form.password(id='password', class='form-control', placeholder='Password') }}
+    {{ form.password.label(for='password') }}
+    {% if form.password.errors %}
+        <ul>
+            {% for error in form.password.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    </div>
+    {{ form.submit( class="btn btn-primary") }}
+    </form>
+    {# Login form ends here #}
+{% endif %}
+
 
 {% endblock %}
 
+
+
+
+
+
+{# {% if message %}<h1>{{ message }}</h1>
+{% else %}{% endif %}
+#}
+{# was used before the flash message #}

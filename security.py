@@ -1,9 +1,10 @@
 from functools import wraps
 from fastapi import Request, HTTPException
 from fastapi.responses import RedirectResponse
-from typing import Callable
+from typing import Callable, Optional
 from config import templates
 from secrets import token_urlsafe
+
 
 from flash import flash
 
@@ -17,11 +18,16 @@ from flash import flash
 def generate_csrf_token():
     return token_urlsafe(32)
 
-async def get_current_user(request: Request) -> str:
-    user = request.session.get('user')
-    if not user:
-      return RedirectResponse(url="/", status_code=302)
-    return user
+
+async def get_current_user(request: Request) -> Optional[str]:
+    return request.session.get('user')
+
+
+# async def get_current_user(request: Request) -> str:
+#     user = request.session.get('user')
+#     if not user:
+#       return RedirectResponse(url="/", status_code=302)
+#     return user
 
 def csrf_protect(endpoint: Callable):
     @wraps(endpoint)
@@ -37,8 +43,8 @@ def csrf_protect(endpoint: Callable):
 
         if not csrf_token or csrf_token != session_csrf_token:
             # Redirect to a specific page or render a template with an error message
-            flash(request, "Error: CSRF token mismatch", "danger")
-            return templates.TemplateResponse("index.html.j2", {"request": request, "message": "CSRF token mismatch"})
+            flash(request, 'Error: CSRF token mismatch. Please, <a href="/" class="alert-link">proceed to the main page.</a>', "danger")
+            return templates.TemplateResponse("index.html.j2", {"request": request}) # before Flash, the dict used to contain: , "message": "CSRF token mismatch"
 
             # raise HTTPException(status_code=400, detail="CSRF token mismatch")
 
