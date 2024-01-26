@@ -93,6 +93,14 @@ async def users(request: Request, user: str = Depends(get_current_user), db: Ses
     roles = db.query(Role).all()  # Fetch all roles
     return templates.TemplateResponse("users.html.j2", {"request": request, "user": user, "users": users, "roles": roles, "message": message, "endpoint_name": request.endpoint_name})
 
+# user
+@app.get("/user/{user_id}", response_class=HTMLResponse)
+@login_required
+async def user_detail(request: Request, user_id: int, db: Session = Depends(get_db), user: str = Depends(get_current_user)):
+    user_detail = db.query(User).options(joinedload(User.roles)).filter(User.id == user_id).first()
+    if not user_detail:
+        raise HTTPException(status_code=404, detail="User not found")
+    return templates.TemplateResponse("user.html.j2", {"request": request, "user": user, "user_detail": user_detail})
 
 # Register GET
 @app.get("/register", response_class=HTMLResponse)
@@ -115,6 +123,13 @@ async def register_user(request: Request, db: Session = Depends(get_db), user: s
     form.roles.choices = [(role.id, role.role_name) for role in roles]  # Set choices for the roles field
 
     if form.validate():
+        username = form.username.data
+        # Check if the username already exists in the database
+        existing_user = db.query(User).filter(User.username == username).first()
+        if existing_user:
+            flash(request, f"Username '{username}' already exists. Please choose a different username.", "error")
+            return templates.TemplateResponse("register.html.j2", {"request": request, "form": form, "user": user, "roles": roles})
+
         hashed_password = hash_password(form.password.data)
         new_user = User(username=form.username.data, hashed_password=hashed_password)
         

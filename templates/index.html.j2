@@ -3,12 +3,6 @@
 
 
 
-{# Flashing message #}
-{% for flashed_message in get_flashed_messages(request) %}
-    <div class="alert alert-{{ flashed_message.category }}">{{ flashed_message.message }}</div>
-{% endfor %}
-{# Flashing message ends here #}
-
 
 
 
