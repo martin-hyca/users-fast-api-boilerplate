@@ -1,0 +1,42 @@
+{% extends "base_template.html.j2" %}
+{% block content %}
+
+
+
+<div class="row justify-content-center">
+  <div class="col-sm-5">
+    <article class="media content-section">
+        
+
+            {% if users %}
+                <table class="table caption-top">
+                <caption>List of users</caption>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        {% for role in roles %}
+                            <th>{{ role.role_name }}</th>
+                        {% endfor %}
+                    </tr>
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            {% for role in roles %}
+                                <td align="center">
+                                    {% if role in user.roles %}
+                                        x
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% else %}
+                <p>No users found.</p>
+            {% endif %}
+    </article>
+  </div>
+</div>
+
+{% endblock %}

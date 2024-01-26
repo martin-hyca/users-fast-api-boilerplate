@@ -41,6 +41,13 @@
                     </ul>
                 {% endif %}
             </div>
+            <div class="form-group">
+                <label for="roles">Roles:</label><br>
+                {% for role_id, role_name in form.roles.choices %}
+                    <input type="checkbox" name="roles" value="{{ role_id }}" id="role-{{ role_id }}">
+                    <label for="role-{{ role_id }}">{{ role_name }}</label><br>
+                {% endfor %}
+            </div>
             <div>
                 {{ form.submit( class="btn btn-primary") }}
             </div>

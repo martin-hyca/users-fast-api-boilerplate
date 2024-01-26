@@ -1,8 +1,12 @@
 from starlette_wtf import StarletteForm
-from wtforms import Form, StringField, PasswordField, SubmitField, validators
+from wtforms import Form, StringField, PasswordField, SubmitField, validators, SelectMultipleField, widgets
 from wtforms.validators import DataRequired, Email, EqualTo
 from wtforms.widgets import PasswordInput
 
+
+class MultiCheckboxField(SelectMultipleField):
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
 
 class RegistrationForm(Form):
     username = StringField('Username', [validators.Length(min=4, max=25)])
@@ -11,6 +15,8 @@ class RegistrationForm(Form):
         validators.EqualTo('confirm', message='Passwords must match')
     ])
     confirm = PasswordField('Repeat Password')
+
+    roles = MultiCheckboxField('Roles', coerce=int)
     submit = SubmitField('Create account')
 
 

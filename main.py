@@ -3,10 +3,10 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from wtforms import Form as WTForm, StringField, PasswordField, validators
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from mydatabase import get_db
-from models import User
+from models import User, Role
 from auth import verify_password, hash_password
 from forms import RegistrationForm, LoginForm, ChangePasswordForm
 from security import login_required, csrf_protect, get_current_user, generate_csrf_token
@@ -27,66 +27,6 @@ app.add_middleware(SessionMiddleware, secret_key=generate_csrf_token) # used to 
 # mount static files
 app.mount("/static/", StaticFiles(directory='static', html=True), name="static")
 
-
-# Register GET
-@app.get("/register", response_class=HTMLResponse)
-@login_required
-async def get_register(request: Request, user: str = Depends(get_current_user)):
-    csrf_token = request.session.get('csrf_token')  # Get CSRF token from session
-    form = RegistrationForm()
-    return templates.TemplateResponse("register.html.j2", {"request": request, "form": form, "csrf_token": csrf_token, "user": user})
-
-# Register POST
-@app.post("/register")
-@csrf_protect
-async def register_user(request: Request, db: Session = Depends(get_db), user: str = Depends(get_current_user)):
-    form_data = await request.form()
-    form = RegistrationForm(formdata=form_data)
-    if form.validate():
-        hashed_password = hash_password(form.password.data)
-        new_user = User(username=form.username.data, hashed_password=hashed_password)
-        db.add(new_user)
-        db.commit()
-        return RedirectResponse(url="/success", status_code=302)
-    return templates.TemplateResponse("register.html.j2", {"request": request, "form": form, "user": user})
-
-# Change Password GET
-@app.get("/settings", response_class=HTMLResponse)
-@login_required
-async def settings(request: Request, user: str = Depends(get_current_user)):
-    form = ChangePasswordForm()
-    csrf_token = request.session.get('csrf_token')  # Get CSRF token from session
-    return templates.TemplateResponse("settings.html.j2", {"request": request, "form": form, "csrf_token": csrf_token, "user": user})
-
-
-# Change Password POST
-@app.post("/settings")
-@csrf_protect
-async def change_password(request: Request, db: Session = Depends(get_db), user: str = Depends(get_current_user)):
-    form_data = await request.form()
-    form = ChangePasswordForm(formdata=form_data)
-
-    if form.validate():
-        # Fetch the current user from the database
-        current_user = db.query(User).filter(User.username == user).first()
-        if current_user and verify_password(form.current_password.data, current_user.hashed_password):
-            # If the current password is correct, hash the new password and update it in the database
-            new_hashed_password = hash_password(form.new_password.data)
-            current_user.hashed_password = new_hashed_password
-            db.commit()
-            flash(request, "Password changed successfuly", "success")
-
-            # Redirect to the success page or inform the user of successful password change
-            return RedirectResponse(url="/success", status_code=302)
-            # this is how I was passing the message before Flash: 
-            # message = "Password changed successfuly"
-            # return RedirectResponse(url=f"/success?message={message}", status_code=302)
-        else:
-            # Handle incorrect current password
-            pass # Add logic to handle incorrect password
-
-    # Handle validation errors or show form again
-    return templates.TemplateResponse("settings.html.j2", {"request": request, "form": form, "user": user})
 
 
 # Asking for login credentials
@@ -143,6 +83,94 @@ async def success(request: Request, user: str = Depends(get_current_user), messa
     if user:
         return templates.TemplateResponse("success.html.j2", {"request": request, "user": user, "message": message})
     return RedirectResponse(url="/", status_code=302)
+
+# users
+@app.get("/users", response_class=HTMLResponse)
+@login_required
+@with_endpoint_name
+async def users(request: Request, user: str = Depends(get_current_user), db: Session = Depends(get_db), message: str = Query(None)):
+    users = db.query(User).options(joinedload(User.roles)).all()  # Using joinedload for eager loading of roles
+    roles = db.query(Role).all()  # Fetch all roles
+    return templates.TemplateResponse("users.html.j2", {"request": request, "user": user, "users": users, "roles": roles, "message": message, "endpoint_name": request.endpoint_name})
+
+
+# Register GET
+@app.get("/register", response_class=HTMLResponse)
+@login_required
+@with_endpoint_name
+async def register(request: Request, db: Session = Depends(get_db), user: str = Depends(get_current_user)):
+    csrf_token = request.session.get('csrf_token')  # Get CSRF token from session
+    form = RegistrationForm()
+    roles = db.query(Role).all()  # Fetch all roles
+    form.roles.choices = [(role.id, role.role_name) for role in roles]  # Set choices for the roles field
+    return templates.TemplateResponse("register.html.j2", {"request": request, "form": form, "csrf_token": csrf_token, "user": user, "endpoint_name": request.endpoint_name})
+
+# Register POST
+@app.post("/register")
+@csrf_protect
+async def register_user(request: Request, db: Session = Depends(get_db), user: str = Depends(get_current_user)):
+    form_data = await request.form()
+    form = RegistrationForm(formdata=form_data)
+    roles = db.query(Role).all()  # Fetch all roles
+    form.roles.choices = [(role.id, role.role_name) for role in roles]  # Set choices for the roles field
+
+    if form.validate():
+        hashed_password = hash_password(form.password.data)
+        new_user = User(username=form.username.data, hashed_password=hashed_password)
+        
+        # Assign roles
+        selected_roles = form_data.getlist('roles')  # Get selected roles from form data
+        for role_id in selected_roles:
+            role = db.query(Role).filter(Role.id == int(role_id)).first()
+            if role:
+                new_user.roles.append(role)
+
+        flash(request, f"User {form.username.data} created.", "success")
+        db.add(new_user)
+        db.commit()
+        return RedirectResponse(url="/success", status_code=302)
+    return templates.TemplateResponse("register.html.j2", {"request": request, "form": form, "user": user, "roles": roles})
+
+
+
+
+# Change Password GET
+@app.get("/settings", response_class=HTMLResponse)
+@login_required
+async def settings(request: Request, user: str = Depends(get_current_user)):
+    form = ChangePasswordForm()
+    csrf_token = request.session.get('csrf_token')  # Get CSRF token from session
+    return templates.TemplateResponse("settings.html.j2", {"request": request, "form": form, "csrf_token": csrf_token, "user": user})
+
+
+# Change Password POST
+@app.post("/settings")
+@csrf_protect
+async def change_password(request: Request, db: Session = Depends(get_db), user: str = Depends(get_current_user)):
+    form_data = await request.form()
+    form = ChangePasswordForm(formdata=form_data)
+
+    if form.validate():
+        # Fetch the current user from the database
+        current_user = db.query(User).filter(User.username == user).first()
+        if current_user and verify_password(form.current_password.data, current_user.hashed_password):
+            # If the current password is correct, hash the new password and update it in the database
+            new_hashed_password = hash_password(form.new_password.data)
+            current_user.hashed_password = new_hashed_password
+            db.commit()
+            flash(request, "Password changed successfuly", "success")
+
+            # Redirect to the success page or inform the user of successful password change
+            return RedirectResponse(url="/success", status_code=302)
+            # this is how I was passing the message before Flash: 
+            # message = "Password changed successfuly"
+            # return RedirectResponse(url=f"/success?message={message}", status_code=302)
+        else:
+            # Handle incorrect current password
+            pass # Add logic to handle incorrect password
+
+    # Handle validation errors or show form again
+    return templates.TemplateResponse("settings.html.j2", {"request": request, "form": form, "user": user})
 
 
 @app.post("/logout")

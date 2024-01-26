@@ -34,10 +34,13 @@
         {# left side of the navbar #}
         <ul class="navbar-nav me-auto mb-2 mb-md-0">
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="#">Home</a>
+            <a class="nav-link {% if endpoint_name == '/' %}active{% endif%}" aria-current="page" href="/">Home</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/register">Add New User</a>
+            <a class="nav-link {% if endpoint_name == 'register' %}active{% endif%}" href="/register">Add New User</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if endpoint_name == 'users' %}active{% endif%}" href="/users">Users</a>
           </li>
           <li class="nav-item">
             <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
@@ -92,7 +95,7 @@
 
     <footer class="footer">
       <div class="container">
-        <span class="text-muted">Place sticky footer content here.
+        <span class="text-muted">Place sticky footer content here. {{ endpoint_name }}
 </span>
       </div>
     </footer>
