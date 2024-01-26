@@ -11,6 +11,8 @@ class RegistrationForm(Form):
         validators.EqualTo('confirm', message='Passwords must match')
     ])
     confirm = PasswordField('Repeat Password')
+    submit = SubmitField('Create account')
+
 
 
 class LoginForm(Form): 
@@ -27,7 +29,8 @@ class ChangePasswordForm(Form):
     confirm_password = PasswordField('Confirm New Password', [
         validators.EqualTo('new_password', message='Passwords must match')
     ])
-    
+    submit = SubmitField('Change Password')
+
         
 
 class CreateAccountForm(StarletteForm):
@@ -55,3 +58,4 @@ class CreateAccountForm(StarletteForm):
             DataRequired('Please confirm your password')
         ]
     )
+    submit = SubmitField('Create account')

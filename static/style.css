@@ -1,6 +1,34 @@
+/* to fix the right-alginment of the dropdown list in navbar, where it seems not to be working as expected */
+.dropdown-menu-end {
+    right: 0;
+    left: auto;
+  }
+
+
 .success{
     color: green;
    }
    .danger{
     color: red;
    }
+
+
+body {
+    background: #fafafa;
+    color: #333333;
+    margin-top: 5rem;
+}
+
+.bg-steel {
+    background-color: #5f788a;
+
+
+}
+
+.content-section {
+    background: #ffffff;
+    padding: 10px 20px;
+    border: 1px solid #dddddd;
+    border-radius: 3px;
+    margin-bottom: 20px;
+  }

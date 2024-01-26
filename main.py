@@ -12,7 +12,7 @@ from forms import RegistrationForm, LoginForm, ChangePasswordForm
 from security import login_required, csrf_protect, get_current_user, generate_csrf_token
 from flash import flash
 from config import templates
-
+from utilities import with_endpoint_name
 # @csrf_protect
 
 
@@ -92,6 +92,7 @@ async def change_password(request: Request, db: Session = Depends(get_db), user:
 # Asking for login credentials
 @app.get("/login", response_class=HTMLResponse)
 @app.get("/", response_class=HTMLResponse)
+@with_endpoint_name
 async def login(request: Request, user: str = Depends(get_current_user)):
         # Generate CSRF token if it doesn't exist
     if 'csrf_token' not in request.session:
@@ -102,11 +103,12 @@ async def login(request: Request, user: str = Depends(get_current_user)):
 
     form = LoginForm()
     message = request.session.pop('message', None)  # Retrieve and remove the message from the session
-    return templates.TemplateResponse("index.html.j2", {"request": request, "form": form, "csrf_token": csrf_token, "user": user, "message": message})
+    return templates.TemplateResponse("index.html.j2", {"request": request, "form": form, "csrf_token": csrf_token, "user": user, "message": message, "endpoint_name": request.endpoint_name})
 
 # Processing login
 @app.post("/login")
 @csrf_protect
+@with_endpoint_name
 async def login_post(request: Request, db: Session = Depends(get_db), user: str = Depends(get_current_user)):
     form_data = await request.form()
     form = LoginForm(formdata=form_data)
@@ -132,7 +134,7 @@ async def login_post(request: Request, db: Session = Depends(get_db), user: str 
     csrf_token = request.session.get('csrf_token', generate_csrf_token())
     message = "login incorrect"
     flash(request, "Login Incorrect", "danger")
-    return templates.TemplateResponse("login.html.j2", {"request": request, "form": form, "csrf_token": csrf_token, "user": user, "message": message})
+    return templates.TemplateResponse("index.html.j2", {"request": request, "form": form, "csrf_token": csrf_token, "user": user, "message": message, "endpoint": request.endpoint_name})
 
 
 # destination after successful login

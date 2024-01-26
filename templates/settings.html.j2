@@ -1,23 +1,30 @@
 {% extends "base_template.html.j2" %}
 {% block content %}
 
-    <h1>Change Password for {{ user }}</h1>
+<div class="row justify-content-center">
+  <div class="col-sm-5">
+    <article class="media content-section">
+    <h3>change password</h1>
+    {# for {{ user }} #}
     <form method="post" action="/settings">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-        <div>
+        <div class="form-floating mb-3">
+            {{ form.current_password(id='current_password', class='form-control', placeholder='Current Password') }}
             {{ form.current_password.label(for='current_password') }}
-            {{ form.current_password(id='current_password') }}
         </div>
-        <div>
+        <div class="form-floating mb-3">
+            {{ form.new_password(id='new_password', class='form-control', placeholder='New Password') }}
             {{ form.new_password.label(for='new_password') }}
-            {{ form.new_password(id='new_password') }}
         </div>
-        <div>
+        <div class="form-floating mb-3">
+            {{ form.confirm_password(id='confirm_password', class='form-control', placeholder='Confirm Password') }}
             {{ form.confirm_password.label(for='confirm_password') }}
-            {{ form.confirm_password(id='confirm_password') }}
         </div>
-        <button type="submit">Change Password</button>
+            {{ form.submit( class="btn btn-primary") }}
     </form>
+    </article>
+  </div>
+</div>
 
 {% endblock %}

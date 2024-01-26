@@ -64,7 +64,7 @@ def login_required(endpoint: Callable):
 
         user = request.session.get('user')
         if not user:
-            request.session['message'] = "You need to login first"
+            flash(request, 'Error: You need to login first.', "danger")
             return RedirectResponse(url="/login", status_code=302)
 
         return await endpoint(*args, **kwargs)
